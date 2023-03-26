@@ -1,5 +1,7 @@
+import matplotlib.pyplot as plt
 import pickle5 as pickle
 import gurobipy as gb
+import matplotlib.patches as mpatches
 
 # Load pickle file, B = bins, R = items
 with open('G11\G1\B.pickle', 'rb') as handle:
@@ -73,6 +75,10 @@ m.setObjective(m.getObjective(), gb.GRB.MINIMIZE)
 print('OBJECTIVE SET')
 # Cost minimization
 
+for j in bin_set:
+    # constraint 0
+    m.addConstr(gb.quicksum(R[i][0] * R[i][1] * p[i, j] for i in item_set), gb.GRB.LESS_EQUAL, B[j][1][0] * B[j][1][1] * u[j])
+
 for i in item_set:
     # constraint 1
     m.addConstr(gb.quicksum(p[i,j] for j in bin_set), gb.GRB.EQUAL, 1)
@@ -98,6 +104,9 @@ for i in item_set:
         for j in bin_set:
             # constraint 7
             m.addConstr(xp[i, k] + xp[k, i] + zp[i, k] + zp[k, i], gb.GRB.GREATER_EQUAL, (p[i, j] - p[k, j]) - 1)
+            # if i != k:
+            #     # constraint 14
+            #     m.addConstr(R[i][4] + R[k][5], gb.GRB.LESS_EQUAL, p[i, j] + p[k, j] - 1)
 
 for i in item_set:
     # constraint 12
@@ -106,8 +115,6 @@ for i in item_set:
 for k in item_set:
     # constraint 13
     m.addConstr(gb.quicksum(s[i, k] for i in item_set), gb.GRB.LESS_EQUAL, len(item_set) * (1 - R[k][3]))
-
-
 
 # stability constraints
 for i in item_set:
@@ -135,6 +142,33 @@ for i in item_set:
         # constraint 24
         m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, x_r[k] + eta3[i, k] * L)
 
+print('ADDED CONSTRAINTS')
+
+m.update()
+m.optimize()
+
+status = m.status
+
+if status == gb.GRB.Status.UNBOUNDED:
+    print('The model cannot be solved because it is unbounded')
+
+elif status == gb.GRB.Status.OPTIMAL or True:
+    f_objective = m.objVal
+    print('***** RESULTS ******')
+    print('\nObjective Function Value: \t %g' % f_objective)
+
+elif status != gb.GRB.Status.INF_OR_UNBD and status != gb.GRB.Status.INFEASIBLE:
+    print('Optimization was stopped with status %d' % status)
 
 
+for bin in u:
+    if u[bin].X == 1:
+        plt.figure()
+        plt.plot([0,0,B[bin][1][0],B[bin][1][0], 0], [0, B[bin][1][1],B[bin][1][1], 0, 0])
+        for i in item_set:
+            if p[i, bin].X == 1:
+                x = [x_l[i].X, x_r[i].X, x_r[i].X, x_l[i].X, x_l[i].X]
+                z = [z_b[i].X, z_b[i].X, z_t[i].X, z_t[i].X, z_b[i].X]
+                plt.plot(x,z)
+        plt.show()
 
