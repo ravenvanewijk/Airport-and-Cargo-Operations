@@ -106,8 +106,9 @@ for i in item_set:
         # constraint 10
         m.addConstr(z_t[k], gb.GRB.LESS_EQUAL, z_b[i] + (1 - zp[i, k]) * H)
         for j in bin_set:
-            # constraint 7
-            m.addConstr(xp[i, k] + xp[k, i] + zp[i, k] + zp[k, i], gb.GRB.GREATER_EQUAL, (p[i, j] - p[k, j]) - 1)
+            if i < k:
+                # constraint 7
+                m.addConstr(xp[i, k] + xp[k, i] + zp[i, k] + zp[k, i], gb.GRB.GREATER_EQUAL, (p[i, j] + p[k, j]) - 1)
             # if i != k:
             #     # constraint 14
             #     m.addConstr(R[i][4] + R[k][5], gb.GRB.LESS_EQUAL, p[i, j] + p[k, j] - 1)
@@ -179,12 +180,12 @@ for bin in u:
 m.params.LogFile='2DBBP.log'
 
 
-plt.figure()
-plt.plot([0, 0, B[0][1][0], B[0][1][0], 0], [0, B[0][1][1], B[0][1][1], 0, 0])
-x = [x_l[0].X, x_r[0].X, x_r[0].X, x_l[0].X, x_l[0].X]
-z = [z_b[0].X, z_b[0].X, z_t[0].X, z_t[0].X, z_b[0].X]
-plt.plot(x, z)
-
-x = [x_l[24].X, x_r[24].X, x_r[24].X, x_l[24].X, x_l[24].X]
-z = [z_b[24].X, z_b[24].X, z_t[24].X, z_t[24].X, z_b[24].X]
-plt.plot(x, z)
+# plt.figure()
+# plt.plot([0, 0, B[0][1][0], B[0][1][0], 0], [0, B[0][1][1], B[0][1][1], 0, 0])
+# x = [x_l[0].X, x_r[0].X, x_r[0].X, x_l[0].X, x_l[0].X]
+# z = [z_b[0].X, z_b[0].X, z_t[0].X, z_t[0].X, z_b[0].X]
+# plt.plot(x, z)
+#
+# x = [x_l[24].X, x_r[24].X, x_r[24].X, x_l[24].X, x_l[24].X]
+# z = [z_b[24].X, z_b[24].X, z_t[24].X, z_t[24].X, z_b[24].X]
+# plt.plot(x, z)
