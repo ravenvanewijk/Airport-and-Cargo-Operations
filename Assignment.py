@@ -196,7 +196,7 @@ for bin in u:
                 plt.plot(x,z)
         plt.show()
 
-model.params.LogFile='2DBBP.log'
+#model.params.LogFile='2DBBP.log'
 
 
 plt.figure()
