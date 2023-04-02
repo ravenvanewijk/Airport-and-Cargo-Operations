@@ -122,7 +122,7 @@ for i in item_set:
     # constraint 12
     model.addConstr(gb.quicksum(gb.quicksum(beta[i, k, l] + 2 * g[i] for k in item_set) for l in l_set), gb.GRB.EQUAL, 2)
 
-for k in item_set:
+#for k in item_set:
     # constraint 13
     model.addConstr(gb.quicksum(s[i, k] for i in item_set), gb.GRB.LESS_EQUAL, len(item_set) * (1 - R[k][3]))
 
@@ -143,14 +143,19 @@ for i in item_set:
         model.addConstr(h[i, k], gb.GRB.LESS_EQUAL, v[i, k])
         # constraint 19
         model.addConstr(v[i, k], gb.GRB.LESS_EQUAL, h[i, k] * H)
-        # constraint 27
-        model.addConstr(o[i, k], gb.GRB.LESS_EQUAL, xp[i, k] + xp[k, i])
-        # constraint 28
-        model.addConstr(xp[i, k] + xp[k, i], gb.GRB.LESS_EQUAL, 2 * o[i, k])
+        if i < k:
+            # constraint 27
+            model.addConstr(o[i, k], gb.GRB.LESS_EQUAL,xp[i, k] + xp[k, i])
+            # constraint 28
+            model.addConstr(xp[i, k] + xp[k, i], gb.GRB.LESS_EQUAL, 2 * o[i, k])
         # constraint 29
         model.addConstr((1 - s[i, k]), gb.GRB.LESS_EQUAL, h[i, k] + o[i, k])
         # constraint 30 HIER NOG NAAR KIJKEN
         # model.addConstr( h[i, k] + o[i, k], gb.GRB.LESS_EQUAL, 2 * (1 - s[i, k]))
+        # constraint 31
+        model.addConstr(eta1[i, k], gb.GRB.LESS_EQUAL,2 * (1- beta[i, k, 1]))
+        # constraint 32
+        model.addConstr(eta3[i, k], gb.GRB.LESS_EQUAL, 2 * (1 - beta[i, k, 2]))
 
         for j in bin_set:
             # constraint 20
@@ -197,13 +202,13 @@ for bin in u:
 
 #model.params.LogFile='2DBBP.log'
 
-
-plt.figure()
-plt.plot([0, 0, B[0][1][0], B[0][1][0], 0], [0, B[0][1][1], B[0][1][1], 0, 0])
-x = [x_l[0].X, x_r[0].X, x_r[0].X, x_l[0].X, x_l[0].X]
-z = [z_b[0].X, z_b[0].X, z_t[0].X, z_t[0].X, z_b[0].X]
-plt.plot(x, z)
-
-x = [x_l[24].X, x_r[24].X, x_r[24].X, x_l[24].X, x_l[24].X]
-z = [z_b[24].X, z_b[24].X, z_t[24].X, z_t[24].X, z_b[24].X]
-plt.plot(x, z)
+#
+# plt.figure()
+# plt.plot([0, 0, B[0][1][0], B[0][1][0], 0], [0, B[0][1][1], B[0][1][1], 0, 0])
+# x = [x_l[0].X, x_r[0].X, x_r[0].X, x_l[0].X, x_l[0].X]
+# z = [z_b[0].X, z_b[0].X, z_t[0].X, z_t[0].X, z_b[0].X]
+# plt.plot(x, z)
+#
+# x = [x_l[24].X, x_r[24].X, x_r[24].X, x_l[24].X, x_l[24].X]
+# z = [z_b[24].X, z_b[24].X, z_t[24].X, z_t[24].X, z_b[24].X]
+# plt.plot(x, z)
