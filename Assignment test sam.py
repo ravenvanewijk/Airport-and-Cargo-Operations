@@ -16,7 +16,7 @@ with open('G11/G1/R.pickle', 'rb') as handle:
 
 # Define sets
 bin_set = B.keys()
-item_set = list(R.keys())[0:5]
+item_set = list(R.keys())[0:10]
 a_set = ['Original','Rotated']
 l_set = [1,2]
 print(item_set)
@@ -52,7 +52,7 @@ eta3 = {}
 for j in bin_set:
     u[j] = m.addVar(obj=B[j][1][3], vtype=gb.GRB.BINARY, name='u_' + str(j))
 for i in item_set:
-    z_b[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'zb_'+str(i))
+    z_b[i] = m.addVar(obj = 0, vtype=gb.GRB.INTEGER, name = 'zb_'+str(i))
     z_t[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'zt_'+str(i))
     x_l[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'xl_'+str(i))
     x_r[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'xr_'+str(i))
@@ -88,85 +88,92 @@ for j in bin_set:
 
 for i in item_set:
     # constraint 1
-    m.addConstr(gb.quicksum(p[i,j] for j in bin_set), gb.GRB.EQUAL, 1)
+    m.addConstr(gb.quicksum(p[i,j] for j in bin_set), gb.GRB.EQUAL, 1, name = 'Constraint 4')
     # constraint 2
-    m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, gb.quicksum(B[j][1][0] * p[i,j] for j in bin_set))
+    m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, gb.quicksum(B[j][1][0] * p[i,j] for j in bin_set), name = 'Constraint 5')
     # constraint 3
-    m.addConstr(z_t[i], gb.GRB.LESS_EQUAL, gb.quicksum(B[j][1][1] * p[i,j] for j in bin_set))
+    m.addConstr(z_t[i], gb.GRB.LESS_EQUAL, gb.quicksum(B[j][1][1] * p[i,j] for j in bin_set), name = 'Constraint 7')
     # constraint 4
-    m.addConstr(x_r[i] - x_l[i], gb.GRB.EQUAL, r[i,'Original'] * R[i][0] + r[i,'Rotated'] * R[i][1])
+    m.addConstr(x_r[i] - x_l[i], gb.GRB.EQUAL, r[i,'Original'] * R[i][0] + r[i,'Rotated'] * R[i][1], name = 'Constraint 8')
     # constraint 5
-    m.addConstr(z_t[i] - z_b[i], gb.GRB.EQUAL, r[i,'Original'] * R[i][1] + r[i,'Rotated'] * R[i][0])
+    m.addConstr(z_t[i] - z_b[i], gb.GRB.EQUAL, r[i,'Original'] * R[i][1] + r[i,'Rotated'] * R[i][0], name = 'Constraint 10')
     # constraint 6
-    m.addConstr(gb.quicksum(r[i,a] for a in a_set), gb.GRB.EQUAL, 1)
+    m.addConstr(gb.quicksum(r[i,a] for a in a_set), gb.GRB.EQUAL, 1, name = 'Constraint 11')
     # constraint 11
-    m.addConstr(r[i, 'Rotated'], gb.GRB.LESS_EQUAL, 0)#R[i][2])
+    m.addConstr(r[i, 'Rotated'], gb.GRB.LESS_EQUAL, R[i][2], name = 'Constraint Rotate')
     for k in item_set:
         # constraint 8
-        m.addConstr(x_r[k], gb.GRB.LESS_EQUAL, x_l[i] + (1 - xp[i, k]) * L)
+        m.addConstr(x_r[k], gb.GRB.LESS_EQUAL, x_l[i] + (1 - xp[i, k]) * L, name = 'Constraint 14')
         # constraint 9
-        m.addConstr(x_l[i] + 1, gb.GRB.LESS_EQUAL, x_r[k] + xp[i, k] * L)
+        m.addConstr(x_l[i] + 1, gb.GRB.LESS_EQUAL, x_r[k] + xp[i, k] * L, name = 'Constraint 15')
         # constraint 10
-        m.addConstr(z_t[k], gb.GRB.LESS_EQUAL, z_b[i] + (1 - zp[i, k]) * H)
+        m.addConstr(z_t[k], gb.GRB.LESS_EQUAL, z_b[i] + (1 - zp[i, k]) * H, name = 'Constraint 18')
         for j in bin_set:
             if i < k:
                 # constraint 7
-                m.addConstr(xp[i, k] + xp[k, i] + zp[i, k] + zp[k, i], gb.GRB.GREATER_EQUAL, (p[i, j] + p[k, j]) - 1)
+                m.addConstr(xp[i, k] + xp[k, i] + zp[i, k] + zp[k, i], gb.GRB.GREATER_EQUAL, (p[i, j] + p[k, j]) - 1, name = 'Constraint 13')
             # if i != k:
             #     # constraint 14
             #     m.addConstr(R[i][4] + R[k][5], gb.GRB.LESS_EQUAL, p[i, j] + p[k, j] - 1)
 
 for i in item_set:
     # constraint 12
-    m.addConstr(gb.quicksum(gb.quicksum(beta[i, j, k] + 2 * g[i] for j in bin_set) for k in l_set), gb.GRB.EQUAL, 2)
+    m.addConstr(gb.quicksum(gb.quicksum(beta[i, j, k] for j in bin_set) for k in l_set)+ 2 * g[i], gb.GRB.EQUAL, 2, name = 'Constraint Docent')
 
 for k in item_set:
     # constraint 13
-    m.addConstr(gb.quicksum(s[i, k] for i in item_set), gb.GRB.LESS_EQUAL, len(item_set) * (1 - R[k][3]))
+    m.addConstr(gb.quicksum(s[i, k] for i in item_set), gb.GRB.LESS_EQUAL, len(item_set) * (1 - R[k][3]), name = 'Constraint 51')
 
 # stability constraints
 for i in item_set:
     # constraint 15
-    m.addConstr(z_b[i], gb.GRB.LESS_EQUAL, (1 - g[i]) * H)
+    m.addConstr(z_b[i], gb.GRB.LESS_EQUAL, (1 - g[i]) * H, name = 'Constraint 27')
     for k in item_set:
         #Test constraint
-        m.addConstr((z_t[k]-z_b[i])/H, gb.GRB.LESS_EQUAL, m1[i, k])
-        m.addConstr(m1[i,k], gb.GRB.LESS_EQUAL, (z_b[i]-z_t[k]))
 
         # constraint 16
-        m.addConstr(z_t[k] - z_b[i], gb.GRB.LESS_EQUAL, v[i, k])
+        m.addConstr(z_t[k] - z_b[i], gb.GRB.LESS_EQUAL, v[i, k], name = 'Constraint 28')
         # constraint 17
-        m.addConstr(z_b[i] - z_t[k], gb.GRB.LESS_EQUAL, v[i, k])
+        m.addConstr(z_b[i] - z_t[k], gb.GRB.LESS_EQUAL, v[i, k], name = 'Constraint 29')
 
         # TEST CONSTRAINTS
-        m.addConstr(v[i,k], gb.GRB.LESS_EQUAL, z_t[k]-z_b[i] + 2*H*(1-m1[i,k]))
-        m.addConstr(v[i,k], gb.GRB.LESS_EQUAL, z_b[i]-z_t[k]+2*H*m1[i,k])
+        m.addConstr(v[i,k], gb.GRB.LESS_EQUAL, z_t[k]-z_b[i] + 2*H*(1-m1[i,k]), name = 'Constraint 30')
+        m.addConstr(v[i,k], gb.GRB.LESS_EQUAL, z_b[i]-z_t[k]+2*H*m1[i,k], name = 'Constraint 31')
 
 
         # constraint 18
-        m.addConstr(h[i, k], gb.GRB.LESS_EQUAL, v[i, k])
+        m.addConstr(h[i, k], gb.GRB.LESS_EQUAL, v[i, k], name = 'Constraint 32')
         # constraint 19
-        m.addConstr(v[i, k], gb.GRB.LESS_EQUAL, h[i, k] * H)
+        m.addConstr(v[i, k], gb.GRB.LESS_EQUAL, h[i, k] * H, name = 'Constraint 33')
         # Test constraint
-        #m.addConstr((1-s[i, k]), gb.GRB.EQUAL, h[i, k])
+
+        m.addConstr(1-s[i, k], gb.GRB.EQUAL, h[i, k], name = 'Test constraint 35')
+        #m.addConstr(s[i,k]+0.1, gb.GRB.GREATER_EQUAL, h[i,k])
+
+
+        #m.addConstr(h[i,k], gb.GRB.LESS_EQUAL, 1-s[i, k], name = 'Test constraint 2')
 
         for j in bin_set:
             # constraint 20
-            m.addConstr(p[i, j] - p[k, j], gb.GRB.LESS_EQUAL, 1 - s[i, k])
+            m.addConstr(p[i, j] - p[k, j], gb.GRB.LESS_EQUAL, 1 - s[i, k], name = 'Constraint 36')
             # constraint 21
-            m.addConstr(p[k, j] - p[i, j], gb.GRB.LESS_EQUAL, 1 - s[i, k])
+            m.addConstr(p[k, j] - p[i, j], gb.GRB.LESS_EQUAL, 1 - s[i, k], name = 'Constraint 37')
         for l in l_set:
             # constraint 22
-            m.addConstr(beta[i, k, l], gb.GRB.LESS_EQUAL, s[i, k])
+            m.addConstr(beta[i, k, l], gb.GRB.LESS_EQUAL, s[i, k], name = 'Constraint 38')
 
         # Test constraints
-        m.addConstr(1-beta[i, k, 1], gb.GRB.LESS_EQUAL, eta1[i,k])
-        m.addConstr(1-beta[i,k,2], gb.GRB.LESS_EQUAL, eta3[i,k])
+        m.addConstr(eta1[i,k], gb.GRB.LESS_EQUAL, 1-beta[i,k,1], name = 'Constraint 39')
+        m.addConstr(eta3[i,k], gb.GRB.LESS_EQUAL, 1-beta[i,k,2], name = 'Constraint 40')
 
         # constraint 23
-        m.addConstr(x_l[k], gb.GRB.LESS_EQUAL, x_l[i] + eta1[i, k] * L)
+        m.addConstr(x_l[k], gb.GRB.LESS_EQUAL, x_l[i] + eta1[i, k] * L, name = 'Constraint eta1')
         # constraint 24
-        m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, x_r[k] + eta3[i, k] * L)
+        m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, x_r[k] + eta3[i, k] * L, name = 'Constraint eta3')
+
+        #TEST CONSTRAINTS
+        m.addConstr(x_l[k], gb.GRB.GREATER_EQUAL, x_l[i] + 0.01 -L*(1-eta1[i, k]))
+        m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_r[k] + 0.01 - L * (1 - eta3[i, k]))
 
 print('ADDED CONSTRAINTS')
 
@@ -203,7 +210,7 @@ for bin in u:
                 plt.text(x_text,z_text, i)
         plt.show()
 
-m.params.LogFile='2DBBP.log'
+# m.params.LogFile='2DBBP.log'
 
 
 # plt.figure()
