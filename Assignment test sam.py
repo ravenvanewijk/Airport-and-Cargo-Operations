@@ -16,7 +16,7 @@ with open('G11/G1/R.pickle', 'rb') as handle:
 
 # Define sets
 bin_set = B.keys()
-item_set = list(R.keys())[0:11]
+item_set = list(R.keys()) #[0:11]
 a_set = ['Original','Rotated']
 l_set = [1,2]
 print(item_set)
@@ -47,6 +47,7 @@ v = {}
 h = {}
 s = {}
 m1 = {}
+o = {}
 eta1 = {}
 eta3 = {}
 for j in bin_set:
@@ -69,6 +70,7 @@ for i in item_set:
         h[i, k] = m.addVar(vtype=gb.GRB.BINARY, name = 'h_'+str(i)+','+str(k))
         s[i, k] = m.addVar(vtype=gb.GRB.BINARY, name = 's_'+str(i)+','+str(k))
         m1[i, k] = m.addVar(vtype=gb.GRB.BINARY, name = 'm_'+str(i)+','+str(k))
+        o[i, k] = m.addVar(vtype=gb.GRB.BINARY, name='o_' + str(i) + ',' + str(k))
         eta1[i, k] = m.addVar(vtype=gb.GRB.BINARY, name = 'eta1_'+str(i)+','+str(k))
         eta3[i, k] = m.addVar(vtype=gb.GRB.BINARY, name = 'eta3_'+str(i)+','+str(k))
         for l in l_set:
@@ -152,8 +154,9 @@ for i in item_set:
         m.addConstr(v[i, k], gb.GRB.LESS_EQUAL, h[i, k] * H, name = 'Constraint 33')
         # Test constraint
 
-        m.addConstr(1-s[i, k], gb.GRB.EQUAL, h[i, k], name = 'Test constraint 35')
-
+        m.addConstr(1-s[i, k], gb.GRB.LESS_EQUAL, h[i, k]+o[i, k], name = 'Test constraint 35')
+        m.addConstr(h[i, k]+o[i, k], gb.GRB.LESS_EQUAL, 2*(1-s[i, k]), name='Test constraint 35-2')
+        m.addConstr(o[i,k], gb.GRB.EQUAL, xp[i,k]+xp[k,i])
 
         for j in bin_set:
             # constraint 20
@@ -175,8 +178,8 @@ for i in item_set:
         #m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_l[k] - (eta3[i,k])*L) # This one is the latest test
 
         #TEST CONSTRAINTS
-        m.addConstr(x_l[k], gb.GRB.GREATER_EQUAL, x_l[i] + 0.01 -L*(1-eta1[i, k]))
-        m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_r[k] + 0.01 - L * (1 - eta3[i, k]))
+        #m.addConstr(x_l[k], gb.GRB.GREATER_EQUAL, x_l[i] + 0.01 -L*(1-eta1[i, k]))
+        #m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_r[k] + 0.01 - L * (1 - eta3[i, k]))
 
 print('ADDED CONSTRAINTS')
 
