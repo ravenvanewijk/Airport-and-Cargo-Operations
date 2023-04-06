@@ -177,9 +177,9 @@ for i in item_set:
         m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, x_r[k] + eta3[i, k] * L, name = 'Constraint eta3')
         #m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_l[k] - (eta3[i,k])*L) # This one is the latest test
 
-        #TEST CONSTRAINTS
-        #m.addConstr(x_l[k], gb.GRB.GREATER_EQUAL, x_l[i] + 0.01 -L*(1-eta1[i, k]))
-        #m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_r[k] + 0.01 - L * (1 - eta3[i, k]))
+        #Constraint Radioactive/perishable
+        model.addConstr(R[i][4] * p[i, j] + R[k][5] * p[k, j], gb.GRB.LESS_EQUAL, 1)
+
 
 print('ADDED CONSTRAINTS')
 
