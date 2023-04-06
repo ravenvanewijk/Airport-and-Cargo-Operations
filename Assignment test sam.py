@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import pickle5 as pickle
 import gurobipy as gb
 import matplotlib.patches as mpatches
+import matplotlib.image as mpimg
+import numpy as np
+import random
 
 # Load pickle file, B = bins, R = items
 with open('G11/G1/B.pickle', 'rb') as handle:
@@ -201,30 +204,53 @@ elif status == gb.GRB.Status.OPTIMAL or True:
 elif status != gb.GRB.Status.INF_OR_UNBD and status != gb.GRB.Status.INFEASIBLE:
     print('Optimization was stopped with status %d' % status)
 
+# define the radioactive image file name and read the image
+img_radio = 'radioactive.png'
+img_rad = mpimg.imread(img_radio)
+
+# define the perishable image file name and read the image
+img_perisc = 'perishable.jpg'
+img_per = mpimg.imread(img_perisc)
+
+# define the fragile image file name and read the image
+img_fragile = 'fragile.jpg'
+img_frag = mpimg.imread(img_fragile)
 
 for bin in u:
     if u[bin].X == 1:
         plt.figure()
-        plt.plot([0,0,B[bin][1][0],B[bin][1][0], 0], [0, B[bin][1][1],B[bin][1][1], 0, 0])
+        plt.ylim(0, B[bin][1][1])
+        plt.xlim(0, B[bin][1][0])
+        plt.title('ULD %s' %(str(bin)))
+        # plt.plot([0,0,B[bin][1][0],B[bin][1][0], 0], [0, B[bin][1][1],B[bin][1][1], 0, 0])
         for i in item_set:
             if p[i, bin].X == 1:
                 x = [x_l[i].X, x_r[i].X, x_r[i].X, x_l[i].X, x_l[i].X]
                 z = [z_b[i].X, z_b[i].X, z_t[i].X, z_t[i].X, z_b[i].X]
-                plt.plot(x,z)
+                if R[i][5] == 1:
+                    # fill the plot with the radioactive image
+                    plt.imshow(img_rad, extent=(x_l[i].X, x_r[i].X, z_b[i].X, z_t[i].X), alpha=0.8)
+                elif R[i][4] == 1:
+                    # fill the plot with the perishable image
+                    plt.imshow(img_per, extent=(x_l[i].X, x_r[i].X, z_b[i].X, z_t[i].X), alpha=0.8)
+                elif R[i][3] == 1:
+                    # fill the plot with the fragile image
+                    plt.imshow(img_frag, extent=(x_l[i].X, x_r[i].X, z_b[i].X, z_t[i].X), alpha=0.8)
+                else:
+                    # Generate a random RGB color
+                    color = tuple(random.uniform(0, 1) for i in range(3))
+                    rect = plt.Rectangle((x_l[i].X, z_b[i].X), x_r[i].X - x_l[i].X, z_t[i].X - z_b[i].X,
+                                         facecolor=color, alpha=0.5)
+                    plt.gca().add_patch(rect)
+                # create outlining
+                plt.plot(x,z, 'k')
                 x_text = x_r[i].X - (x_r[i].X - x_l[i].X)/2
                 z_text = z_t[i].X - (z_t[i].X - z_b[i].X)/2
-                plt.text(x_text,z_text, i)
+                plt.text(x_text, z_text, i, color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+        plt.ylabel('Height')
+        plt.xlabel('Length')
+        plt.grid()
         plt.show()
 
 # m.params.LogFile='2DBBP.log'
 
-
-# plt.figure()
-# plt.plot([0, 0, B[0][1][0], B[0][1][0], 0], [0, B[0][1][1], B[0][1][1], 0, 0])
-# x = [x_l[0].X, x_r[0].X, x_r[0].X, x_l[0].X, x_l[0].X]
-# z = [z_b[0].X, z_b[0].X, z_t[0].X, z_t[0].X, z_b[0].X]
-# plt.plot(x, z)
-#
-# x = [x_l[24].X, x_r[24].X, x_r[24].X, x_l[24].X, x_l[24].X]
-# z = [z_b[24].X, z_b[24].X, z_t[24].X, z_t[24].X, z_b[24].X]
-# plt.plot(x, z)
