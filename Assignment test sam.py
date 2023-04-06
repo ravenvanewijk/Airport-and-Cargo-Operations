@@ -184,7 +184,7 @@ for i in item_set:
 print('ADDED CONSTRAINTS')
 
 m.update()
-m.setParam('TimeLimit', 8*60*60)
+m.setParam('TimeLimit', 2*60*60)
 m.optimize()
 m.write('betas.lp')
 m.write('betas.sol')
