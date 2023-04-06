@@ -12,11 +12,11 @@ with open('G11/G1/B.pickle', 'rb') as handle:
 with open('G11/G1/R.pickle', 'rb') as handle:
     R = pickle.load(handle)
 
-# R ={0: (118, 28, 1, 0, 1, 0), 1: (105, 46, 1, 1, 0, 0), 2: (97, 57, 1, 1, 0, 0), 3: (78, 62, 1, 0, 0, 1), 4: (97, 39, 1, 1, 0, 0), 5: (82, 29, 1, 0, 0, 0), 6: (91, 54, 1, 0, 0, 0), 7: (109, 24, 1, 0, 0, 0), 8: (60, 28, 1, 0, 0, 0), 9: (79, 42, 1, 0, 0, 0), 10: (111, 23, 0, 1, 0, 0), 11: (84, 46, 1, 0, 0, 0), 12: (51, 34, 1, 0, 0, 0), 13: (76, 28, 1, 0, 0, 0), 14: (93, 27, 1, 0, 0, 0), 15: (55, 35, 1, 0, 0, 0), 16: (67, 24, 0, 1, 0, 0), 17: (77, 55, 1, 0, 0, 0), 18: (98, 62, 1, 0, 0, 0), 19: (93, 54, 1, 0, 0, 0), 20: (93, 61, 1, 0, 0, 0), 21: (65, 41, 1, 0, 0, 0), 22: (117, 30, 1, 0, 0, 0), 23: (120, 26, 1, 1, 0, 1), 24: (112, 54, 0, 0, 0, 0)}
+#R ={0: (150, 28, 0, 0, 1, 0), 1: (150, 28, 0, 0, 0, 0), 2: (200, 30, 0, 1, 0, 0)} #, 3: (78, 62, 1, 0, 0, 1), 4: (97, 39, 1, 1, 0, 0), 5: (82, 29, 1, 0, 0, 0), 6: (91, 54, 1, 0, 0, 0), 7: (109, 24, 1, 0, 0, 0), 8: (60, 28, 1, 0, 0, 0), 9: (79, 42, 1, 0, 0, 0), 10: (111, 23, 0, 1, 0, 0), 11: (84, 46, 1, 0, 0, 0), 12: (51, 34, 1, 0, 0, 0), 13: (76, 28, 1, 0, 0, 0), 14: (93, 27, 1, 0, 0, 0), 15: (55, 35, 1, 0, 0, 0), 16: (67, 24, 0, 1, 0, 0), 17: (77, 55, 1, 0, 0, 0), 18: (98, 62, 1, 0, 0, 0), 19: (93, 54, 1, 0, 0, 0), 20: (93, 61, 1, 0, 0, 0), 21: (65, 41, 1, 0, 0, 0), 22: (117, 30, 1, 0, 0, 0), 23: (120, 26, 1, 1, 0, 1), 24: (112, 54, 0, 0, 0, 0)}
 
 # Define sets
 bin_set = B.keys()
-item_set = list(R.keys())[0:10]
+item_set = list(R.keys())[0:11]
 a_set = ['Original','Rotated']
 l_set = [1,2]
 print(item_set)
@@ -52,7 +52,7 @@ eta3 = {}
 for j in bin_set:
     u[j] = m.addVar(obj=B[j][1][3], vtype=gb.GRB.BINARY, name='u_' + str(j))
 for i in item_set:
-    z_b[i] = m.addVar(obj = 0, vtype=gb.GRB.INTEGER, name = 'zb_'+str(i))
+    z_b[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'zb_'+str(i))
     z_t[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'zt_'+str(i))
     x_l[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'xl_'+str(i))
     x_r[i] = m.addVar(vtype=gb.GRB.INTEGER, name = 'xr_'+str(i))
@@ -118,7 +118,12 @@ for i in item_set:
 
 for i in item_set:
     # constraint 12
-    m.addConstr(gb.quicksum(gb.quicksum(beta[i, j, k] for j in bin_set) for k in l_set)+ 2 * g[i], gb.GRB.EQUAL, 2, name = 'Constraint Docent')
+    m.addConstr(gb.quicksum(gb.quicksum(beta[i, j, k] for j in item_set) for k in l_set)+ 2 * g[i], gb.GRB.EQUAL, 2, name = 'Constraint Docent')
+
+# Test constraints
+for i in item_set:
+    m.addConstr(gb.quicksum(beta[i,j,1] for j in item_set), gb.GRB.LESS_EQUAL, 1)
+    m.addConstr(gb.quicksum(beta[i, j, 2] for j in item_set), gb.GRB.LESS_EQUAL, 1)
 
 for k in item_set:
     # constraint 13
@@ -148,10 +153,7 @@ for i in item_set:
         # Test constraint
 
         m.addConstr(1-s[i, k], gb.GRB.EQUAL, h[i, k], name = 'Test constraint 35')
-        #m.addConstr(s[i,k]+0.1, gb.GRB.GREATER_EQUAL, h[i,k])
 
-
-        #m.addConstr(h[i,k], gb.GRB.LESS_EQUAL, 1-s[i, k], name = 'Test constraint 2')
 
         for j in bin_set:
             # constraint 20
@@ -170,6 +172,7 @@ for i in item_set:
         m.addConstr(x_l[k], gb.GRB.LESS_EQUAL, x_l[i] + eta1[i, k] * L, name = 'Constraint eta1')
         # constraint 24
         m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, x_r[k] + eta3[i, k] * L, name = 'Constraint eta3')
+        #m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_l[k] - (eta3[i,k])*L) # This one is the latest test
 
         #TEST CONSTRAINTS
         m.addConstr(x_l[k], gb.GRB.GREATER_EQUAL, x_l[i] + 0.01 -L*(1-eta1[i, k]))
@@ -178,7 +181,7 @@ for i in item_set:
 print('ADDED CONSTRAINTS')
 
 m.update()
-m.setParam('TimeLimit', 60)
+m.setParam('TimeLimit', 8*60*60)
 m.optimize()
 m.write('betas.lp')
 m.write('betas.sol')
