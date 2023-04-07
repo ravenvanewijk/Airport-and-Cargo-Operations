@@ -16,11 +16,11 @@ with open('G11/G1/R.pickle', 'rb') as handle:
     R = pickle.load(handle)
 
 
-R ={0: (150, 28, 0, 0, 1, 0), 1: (150, 28, 0, 0, 0, 0), 2: (200, 30, 0, 1, 0, 0), 3: (78, 62, 1, 0, 0, 1), 4: (97, 39, 1, 1, 0, 0), 5: (82, 29, 1, 0, 0, 0), 6: (91, 54, 1, 0, 0, 0), 7: (109, 24, 1, 0, 0, 0), 8: (60, 28, 1, 0, 0, 0), 9: (79, 42, 1, 0, 0, 0), 10: (111, 23, 0, 1, 0, 0), 11: (84, 46, 1, 0, 0, 0)}#, 12: (51, 34, 1, 0, 0, 0), 13: (76, 28, 1, 0, 0, 0), 14: (93, 27, 1, 0, 0, 0), 15: (55, 35, 1, 0, 0, 0), 16: (67, 24, 0, 1, 0, 0), 17: (77, 55, 1, 0, 0, 0), 18: (98, 62, 1, 0, 0, 0), 19: (93, 54, 1, 0, 0, 0), 20: (93, 61, 1, 0, 0, 0), 21: (65, 41, 1, 0, 0, 0), 22: (117, 30, 1, 0, 0, 0), 23: (120, 26, 1, 1, 0, 1), 24: (112, 54, 0, 0, 0, 0)}
+#R ={0: (150, 28, 0, 0, 1, 0), 1: (150, 28, 0, 0, 0, 0), 2: (200, 30, 0, 1, 0, 0), 3: (78, 62, 1, 0, 0, 1), 4: (97, 39, 1, 1, 0, 0), 5: (82, 29, 1, 0, 0, 0), 6: (91, 54, 1, 0, 0, 0), 7: (109, 24, 1, 0, 0, 0), 8: (60, 28, 1, 0, 0, 0), 9: (79, 42, 1, 0, 0, 0), 10: (111, 23, 0, 1, 0, 0), 11: (84, 46, 1, 0, 0, 0)}#, 12: (51, 34, 1, 0, 0, 0), 13: (76, 28, 1, 0, 0, 0), 14: (93, 27, 1, 0, 0, 0), 15: (55, 35, 1, 0, 0, 0), 16: (67, 24, 0, 1, 0, 0), 17: (77, 55, 1, 0, 0, 0), 18: (98, 62, 1, 0, 0, 0), 19: (93, 54, 1, 0, 0, 0), 20: (93, 61, 1, 0, 0, 0), 21: (65, 41, 1, 0, 0, 0), 22: (117, 30, 1, 0, 0, 0), 23: (120, 26, 1, 1, 0, 1), 24: (112, 54, 0, 0, 0, 0)}
 
 # Define sets
 bin_set = B.keys()
-item_set = list(R.keys()) #[0:11]
+item_set = list(R.keys())#[0:24]
 a_set = ['Original','Rotated']
 l_set = [1,2]
 print(item_set)
@@ -181,15 +181,23 @@ for i in item_set:
         m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, x_r[k] + eta3[i, k] * L, name = 'Constraint eta3')
         #m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_l[k] - (eta3[i,k])*L) # This one is the latest test
 
+print('ADDED CONSTRAINTS')
+m.update()
+m.setParam('Timelimit', 2.5*60*60)
+m.optimize()
+m.update()
+
+for i in item_set:
+    for k in item_set:
         #Constraint Radioactive/perishable
         for j in bin_set:
             m.addConstr(R[i][4] * p[i, j] + R[k][5] * p[k, j], gb.GRB.LESS_EQUAL, 1, name = 'Perish constraint')
 
 
-print('ADDED CONSTRAINTS')
+print('ADDED per/rad CONSTRAINTS')
 
 m.update()
-m.setParam('TimeLimit', 2*60*60)
+m.setParam('TimeLimit', 7*60*60)
 m.optimize()
 m.write('betas.lp')
 m.write('betas.sol')
@@ -254,5 +262,5 @@ for bin in u:
         plt.grid()
         plt.show()
 
-# m.params.LogFile='2DBBP.log'
+m.params.LogFile='2DBBP.log'
 
