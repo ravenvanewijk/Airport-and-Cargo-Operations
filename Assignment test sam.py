@@ -268,7 +268,7 @@ for bin in u:
                 plt.plot(x,z, 'k')
 
                 # create textblock. if not rotatable, make red
-                if R[i][2]:
+                if R[i][2] != 1:
                     if r[i,'Rotated'].X == 1:
                         x_text = x_r[i].X - (x_r[i].X - x_l[i].X) / 2
                         z_text = z_t[i].X - (z_t[i].X - z_b[i].X) / 2
