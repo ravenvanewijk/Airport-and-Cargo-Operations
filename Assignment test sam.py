@@ -16,7 +16,7 @@ with open('G11/G1/R.pickle', 'rb') as handle:
     R = pickle.load(handle)
 
 
-#R ={0: (150, 28, 0, 0, 1, 0), 1: (150, 28, 0, 0, 0, 0), 2: (200, 30, 0, 1, 0, 0), 3: (78, 62, 1, 0, 0, 1), 4: (97, 39, 1, 1, 0, 0), 5: (82, 29, 1, 0, 0, 0), 6: (91, 54, 1, 0, 0, 0), 7: (109, 24, 1, 0, 0, 0), 8: (60, 28, 1, 0, 0, 0), 9: (79, 42, 1, 0, 0, 0), 10: (111, 23, 0, 1, 0, 0), 11: (84, 46, 1, 0, 0, 0)}#, 12: (51, 34, 1, 0, 0, 0), 13: (76, 28, 1, 0, 0, 0), 14: (93, 27, 1, 0, 0, 0), 15: (55, 35, 1, 0, 0, 0), 16: (67, 24, 0, 1, 0, 0), 17: (77, 55, 1, 0, 0, 0), 18: (98, 62, 1, 0, 0, 0), 19: (93, 54, 1, 0, 0, 0), 20: (93, 61, 1, 0, 0, 0), 21: (65, 41, 1, 0, 0, 0), 22: (117, 30, 1, 0, 0, 0), 23: (120, 26, 1, 1, 0, 1), 24: (112, 54, 0, 0, 0, 0)}
+R ={0: (150, 28, 0, 0, 1, 0), 1: (150, 28, 0, 0, 0, 0), 2: (200, 30, 0, 1, 0, 0), 3: (78, 62, 1, 0, 0, 1), 4: (97, 39, 1, 1, 0, 0), 5: (82, 29, 1, 0, 0, 0), 23: (120, 26, 1, 1, 0, 1)}#, 6: (91, 54, 1, 0, 0, 0), 7: (109, 24, 1, 0, 0, 0), 8: (60, 28, 1, 0, 0, 0), 9: (79, 42, 1, 0, 0, 0), 10: (111, 23, 0, 1, 0, 0), 11: (84, 46, 1, 0, 0, 0)}#, 12: (51, 34, 1, 0, 0, 0), 13: (76, 28, 1, 0, 0, 0), 14: (93, 27, 1, 0, 0, 0), 15: (55, 35, 1, 0, 0, 0), 16: (67, 24, 0, 1, 0, 0), 17: (77, 55, 1, 0, 0, 0), 18: (98, 62, 1, 0, 0, 0), 19: (93, 54, 1, 0, 0, 0), 20: (93, 61, 1, 0, 0, 0), 21: (65, 41, 1, 0, 0, 0), 22: (117, 30, 1, 0, 0, 0), 23: (120, 26, 1, 1, 0, 1), 24: (112, 54, 0, 0, 0, 0)}
 
 # Define sets
 bin_set = B.keys()
@@ -223,7 +223,7 @@ img_perisc = 'perishable.jpg'
 img_per = mpimg.imread(img_perisc)
 
 # define the fragile image file name and read the image
-img_fragile = 'fragile.jpg'
+img_fragile = 'fragile_test.png'
 img_frag = mpimg.imread(img_fragile)
 
 for bin in u:
@@ -243,20 +243,53 @@ for bin in u:
                 elif R[i][4] == 1:
                     # fill the plot with the perishable image
                     plt.imshow(img_per, extent=(x_l[i].X, x_r[i].X, z_b[i].X, z_t[i].X), alpha=0.8)
-                elif R[i][3] == 1:
-                    # fill the plot with the fragile image
-                    plt.imshow(img_frag, extent=(x_l[i].X, x_r[i].X, z_b[i].X, z_t[i].X), alpha=0.8)
                 else:
                     # Generate a random RGB color
                     color = tuple(random.uniform(0, 1) for i in range(3))
                     rect = plt.Rectangle((x_l[i].X, z_b[i].X), x_r[i].X - x_l[i].X, z_t[i].X - z_b[i].X,
                                          facecolor=color, alpha=0.5)
                     plt.gca().add_patch(rect)
+                if R[i][3] == 1:
+                    # define the limits of the top right corner of the x and z coordinates
+                    x_topright = x_r[i].X
+                    z_topright = z_t[i].X
+
+                    # calculate the size of the square image based on the smaller dimension of x and z
+                    img_size = min(x_topright - x_l[i].X, z_topright - z_b[i].X)
+                    img_size = img_size * 1.55
+
+                    # calculate the center of the square image
+                    x_center = x_topright - img_size / 2
+                    z_center = z_topright - img_size / 2
+
+                    # fill the plot with the fragile image
+                    plt.imshow(img_frag, extent=(x_center, x_topright, z_center, z_topright), alpha=1, zorder=10)
                 # create outlining
                 plt.plot(x,z, 'k')
-                x_text = x_r[i].X - (x_r[i].X - x_l[i].X)/2
-                z_text = z_t[i].X - (z_t[i].X - z_b[i].X)/2
-                plt.text(x_text, z_text, i, color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+
+                # create textblock. if not rotatable, make red
+                if R[i][2]:
+                    if r[i,'Rotated'].X == 1:
+                        x_text = x_r[i].X - (x_r[i].X - x_l[i].X) / 2
+                        z_text = z_t[i].X - (z_t[i].X - z_b[i].X) / 2
+                        plt.text(x_text, z_text, str(i) + ', R', color='black',
+                                 bbox=dict(facecolor='#FF8888', edgecolor='black', boxstyle='round,pad=0.3'))
+                    else:
+                        x_text = x_r[i].X - (x_r[i].X - x_l[i].X) / 2
+                        z_text = z_t[i].X - (z_t[i].X - z_b[i].X) / 2
+                        plt.text(x_text, z_text, i, color='black',
+                                 bbox=dict(facecolor='#FF8888', edgecolor='black', boxstyle='round,pad=0.3'))
+                else:
+                    if r[i,'Rotated'].X == 1:
+                        x_text = x_r[i].X - (x_r[i].X - x_l[i].X)/2
+                        z_text = z_t[i].X - (z_t[i].X - z_b[i].X)/2
+                        plt.text(x_text, z_text, str(i) + ', R', color='black',
+                                 bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+                    else:
+                        x_text = x_r[i].X - (x_r[i].X - x_l[i].X)/2
+                        z_text = z_t[i].X - (z_t[i].X - z_b[i].X)/2
+                        plt.text(x_text, z_text, i, color='black',
+                                 bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
         plt.ylabel('Height')
         plt.xlabel('Length')
         plt.grid()
