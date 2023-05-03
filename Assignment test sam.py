@@ -20,7 +20,7 @@ with open('G11/G1/R.pickle', 'rb') as handle:
 
 # Define sets
 bin_set = B.keys()
-item_set = list(R.keys())#[0:24]
+item_set = list(R.keys())[0:10]
 a_set = ['Original','Rotated']
 l_set = [1,2]
 print(item_set)
@@ -295,5 +295,52 @@ for bin in u:
         plt.grid()
         plt.show()
 
-m.params.LogFile='2DBBP.log'
+##Create Pickle file
+#Make list of IDs of bins used
 
+bins_used = []
+for i in bin_set:
+    if u[i].X == 1:
+        bins_used.append(i)
+
+print('bins used', bins_used)
+#Create dict where keys are the IDs of the bins used, and the values are IDs of items
+dict_bins_items = {}
+for j in bin_set:
+    if u[j].X == 1:
+        item_list = []
+        for i in item_set:
+            if p[i,j].X == 1:
+                item_list.append(i)
+        dict_bins_items[j] = item_list
+print('dict items in bins',dict_bins_items)
+#Create dict where key is item ID and values are list of 4 elements containing
+    #horizontal position of lower left vertex, vertical position of lower left vertex
+    #horizontal extention and vertical extention
+
+dict_item_location = {}
+for i in item_set:
+    item_location = []
+    item_location.append(x_l[i].X)
+    item_location.append(z_b[i].X)
+    horizontal_extention = x_r[i].X - x_l[i].X
+    vertical_extention = z_t[i].X - z_b[i].X
+    item_location.append(horizontal_extention)
+    item_location.append(vertical_extention)
+    dict_item_location[i] = item_location
+
+print('item locations', dict_item_location)
+
+#Create pickle files
+
+with open('bins_used.pickle','wb') as handle:
+    pickle.dump(bins_used,handle,protocol=pickle.HIGHEST_PROTOCOL)
+
+with open('items_in_bins.pickle','wb') as handle:
+    pickle.dump(dict_bins_items,handle,protocol=pickle.HIGHEST_PROTOCOL)
+
+with open('item_location.pickle','wb') as handle:
+    pickle.dump(dict_item_location,handle,protocol=pickle.HIGHEST_PROTOCOL)
+
+
+m.params.LogFile='2DBBP.log'
