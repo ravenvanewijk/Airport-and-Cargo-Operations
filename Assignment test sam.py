@@ -20,7 +20,7 @@ with open('G11/G1/R.pickle', 'rb') as handle:
 
 # Define sets
 bin_set = B.keys()
-item_set = list(R.keys())[0:10]
+item_set = list(R.keys())#[0:10]
 a_set = ['Original','Rotated']
 l_set = [1,2]
 print(item_set)
@@ -67,7 +67,6 @@ for i in item_set:
     for j in bin_set:
         p[i,j] = m.addVar(vtype=gb.GRB.BINARY, name = 'p_'+str(i)+','+str(j))
     for k in item_set:
-        print(i,k)
         xp[i, k] = m.addVar(vtype=gb.GRB.BINARY, name = 'xp_'+str(i)+','+str(k))
         zp[i, k] = m.addVar(vtype=gb.GRB.BINARY, name = 'zp_'+str(i)+','+str(k))
         v[i, k] = m.addVar(vtype=gb.GRB.INTEGER, name = 'v_'+str(i)+','+str(k))
@@ -181,12 +180,6 @@ for i in item_set:
         m.addConstr(x_r[i], gb.GRB.LESS_EQUAL, x_r[k] + eta3[i, k] * L, name = 'Constraint eta3')
         #m.addConstr(x_r[i], gb.GRB.GREATER_EQUAL, x_l[k] - (eta3[i,k])*L) # This one is the latest test
 
-print('ADDED CONSTRAINTS')
-m.update()
-m.setParam('Timelimit', 1.5*60*60)
-m.optimize()
-m.update()
-
 for i in item_set:
     for k in item_set:
         #Constraint Radioactive/perishable
@@ -194,10 +187,10 @@ for i in item_set:
             m.addConstr(R[i][4] * p[i, j] + R[k][5] * p[k, j], gb.GRB.LESS_EQUAL, 1, name = 'Perish constraint')
 
 
-print('ADDED per/rad CONSTRAINTS')
+print('ADDED CONSTRAINTS')
 
 m.update()
-m.setParam('TimeLimit', 0.5*60*60)
+m.setParam('TimeLimit', 2*60*60)
 m.optimize()
 m.write('betas.lp')
 m.write('betas.sol')
